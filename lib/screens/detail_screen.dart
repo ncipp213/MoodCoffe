@@ -16,16 +16,57 @@ class CoffeeDetailScreen extends StatefulWidget {
 class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
   String selectedMilk = 'Classic';
   String selectedSize = '370ml';
+  int basePrice = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    basePrice = _extractPrice(widget.coffee.price);
+  }
+
+  int _extractPrice(dynamic price) {
+    if (price is int) return price;
+    if (price is String) {
+      final numeric = price.replaceAll(RegExp(r'[^0-9]'), '');
+      return int.tryParse(numeric) ?? 0;
+    }
+    return 0;
+  }
+
+  int getCurrentPrice() {
+    switch (selectedSize) {
+      case '280ml':
+        return basePrice - 5000;
+      case '450ml':
+        return basePrice + 5000;
+      default:
+        return basePrice;
+    }
+  }
+
+  String _formatPrice(int price) {
+    return 'Rp ${price.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+  }
 
   void _addToCart() {
+    final currentPrice = getCurrentPrice();
+    final coffeeWithPrice = Coffee(
+      id: widget.coffee.id,
+      name: widget.coffee.name,
+      description: widget.coffee.description,
+      price: currentPrice.toString(),
+      imageUrl: widget.coffee.imageUrl,
+      category: widget.coffee.category,
+      rating: widget.coffee.rating,
+    );
     Provider.of<CartProvider>(context, listen: false).addItem(
-      widget.coffee,
+      coffeeWithPrice,
       selectedMilk,
       selectedSize,
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${widget.coffee.name} ditambahkan ke keranjang'),
+        content: Text('${widget.coffee.name} ($selectedSize) ditambahkan ke keranjang'),
         backgroundColor: const Color(0xFF6F4E37),
         duration: const Duration(seconds: 1),
       ),
@@ -33,8 +74,18 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
   }
 
   void _orderNow() {
+    final currentPrice = getCurrentPrice();
+    final coffeeWithPrice = Coffee(
+      id: widget.coffee.id,
+      name: widget.coffee.name,
+      description: widget.coffee.description,
+      price: currentPrice.toString(),
+      imageUrl: widget.coffee.imageUrl,
+      category: widget.coffee.category,
+      rating: widget.coffee.rating,
+    );
     Provider.of<CartProvider>(context, listen: false).addItem(
-      widget.coffee,
+      coffeeWithPrice,
       selectedMilk,
       selectedSize,
     );
@@ -49,6 +100,7 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     final favoriteProvider = Provider.of<FavoriteProvider>(context);
     final isFav = favoriteProvider.isFavorite(widget.coffee);
+    final currentPrice = getCurrentPrice();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF0F0),
@@ -149,6 +201,21 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
                       _buildOptionChip("280ml", selectedSize == "280ml", (val) => setState(() => selectedSize = val)),
                       _buildOptionChip("370ml", selectedSize == "370ml", (val) => setState(() => selectedSize = val)),
                       _buildOptionChip("450ml", selectedSize == "450ml", (val) => setState(() => selectedSize = val)),
+                    ],
+                  ),
+                  const SizedBox(height: 25),
+                  // Tampilkan Harga
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Harga:",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        _formatPrice(currentPrice),
+                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF6F4E37)),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 40),

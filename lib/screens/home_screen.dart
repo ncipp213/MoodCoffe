@@ -16,32 +16,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String _selectedCategory = 'all';
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
   List<Coffee> get _filteredCoffee {
-    List<Coffee> filtered = coffeeList;
-    if (_selectedCategory != 'all') {
-      filtered = filtered.where((coffee) => coffee.category == _selectedCategory).toList();
-    }
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((coffee) => coffee.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
-    }
-    return filtered;
+    if (_searchQuery.isEmpty) return coffeeList;
+    return coffeeList.where((coffee) =>
+        coffee.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
   }
 
   void _navigateToDetail(Coffee coffee) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => CoffeeDetailScreen(coffee: coffee),
-      ),
+      MaterialPageRoute(builder: (context) => CoffeeDetailScreen(coffee: coffee)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isSearching = _searchQuery.isNotEmpty;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -84,7 +78,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         prefixIcon: const Icon(Icons.search, color: Colors.grey),
                         filled: true,
                         fillColor: Colors.grey.shade100,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -98,50 +95,39 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: const Text('moodcoffee ☕', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(height: 24),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildChip('all', 'All'),
-                          const SizedBox(width: 8),
-                          _buildChip('hot', 'Hot coffee'),
-                          const SizedBox(width: 8),
-                          _buildChip('cold', 'Cold coffee'),
-                          const SizedBox(width: 8),
-                          _buildChip('others', 'Others'),
-                        ],
+                  ],
+                ),
+              ),
+            ),
+            // Recommended for you (hanya tampil jika tidak sedang mencari)
+            if (!isSearching) ...[
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Text('Recommended for you', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 250,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: coffeeList.take(5).length,
+                        itemBuilder: (context, index) => CoffeeCard(
+                          coffee: coffeeList[index],
+                          onTap: () => _navigateToDetail(coffeeList[index]),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
                   ],
                 ),
               ),
-            ),
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: Text('Recommended for you', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 250,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: coffeeList.take(5).length,
-                      itemBuilder: (context, index) => CoffeeCard(
-                        coffee: coffeeList[index],
-                        onTap: () => _navigateToDetail(coffeeList[index]),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
+            ],
+            // Menu Kopi (selalu tampil, dengan hasil filter)
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverToBoxAdapter(
@@ -150,21 +136,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const Text('Menu Kopi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.68,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: _filteredCoffee.length,
-                      itemBuilder: (context, index) => CoffeeCard(
-                        coffee: _filteredCoffee[index],
-                        onTap: () => _navigateToDetail(_filteredCoffee[index]),
-                      ),
-                    ),
+                    _filteredCoffee.isEmpty
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(vertical: 40),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'Menu tidak tersedia',
+                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                            ),
+                          )
+                        : GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.68,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                            ),
+                            itemCount: _filteredCoffee.length,
+                            itemBuilder: (context, index) => CoffeeCard(
+                              coffee: _filteredCoffee[index],
+                              onTap: () => _navigateToDetail(_filteredCoffee[index]),
+                            ),
+                          ),
                   ],
                 ),
               ),
@@ -198,32 +193,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         onTap: (index) {
           if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FavoriteScreen()),
-            );
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const FavoriteScreen()));
           } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CartScreen()),
-            );
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const CartScreen()));
           }
         },
-      ),
-    );
-  }
-
-  Widget _buildChip(String value, String label) {
-    return FilterChip(
-      label: Text(label),
-      selected: _selectedCategory == value,
-      onSelected: (selected) => setState(() => _selectedCategory = selected ? value : 'all'),
-      backgroundColor: Colors.grey.shade100,
-      selectedColor: const Color(0xFF6F4E37).withOpacity(0.2),
-      checkmarkColor: const Color(0xFF6F4E37),
-      labelStyle: TextStyle(
-        color: _selectedCategory == value ? const Color(0xFF6F4E37) : Colors.grey.shade700,
-        fontWeight: _selectedCategory == value ? FontWeight.bold : null,
       ),
     );
   }
