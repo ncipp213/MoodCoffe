@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
+import 'payment_screen.dart'; // import halaman payment
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
-  // Fungsi format titik untuk ribuan
   String formatPrice(double price) {
     return price.toInt().toString().replaceAllMapped(
         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
@@ -16,8 +16,8 @@ class CartScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFFDF0F0),
       appBar: AppBar(
-        title: const Text("My Cart", 
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: const Text("My Cart",
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -52,7 +52,6 @@ class CartScreen extends StatelessWidget {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(15),
-                            // PERBAIKAN: Menggunakan imageUrl sesuai error sebelumnya
                             child: Image.network(item.imageUrl, width: 70, height: 70, fit: BoxFit.cover),
                           ),
                           const SizedBox(width: 15),
@@ -62,7 +61,6 @@ class CartScreen extends StatelessWidget {
                               children: [
                                 Text(item.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                 Text("Rp ${formatPrice(item.price.toDouble())}", style: const TextStyle(color: Colors.white70)),
-                                // Jika error category muncul lagi, hapus baris di bawah ini atau ganti ke item.milk
                                 Text(item.milk, style: const TextStyle(color: Colors.white38, fontSize: 11)),
                               ],
                             ),
@@ -105,8 +103,7 @@ class CartScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text("Total Payment", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        // PERBAIKAN: Menggunakan totalAmount sesuai variabel di CartProvider kamu
-                        Text("Rp ${formatPrice(cart.totalAmount.toDouble())}", 
+                        Text("Rp ${formatPrice(cart.totalAmount.toDouble())}",
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF6F4E37))),
                       ],
                     ),
@@ -119,7 +116,13 @@ class CartScreen extends StatelessWidget {
                           backgroundColor: const Color(0xFF6F4E37),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          // Navigasi ke halaman PaymentScreen
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const PaymentScreen()),
+                          );
+                        },
                         child: const Text("Payment", style: TextStyle(color: Colors.white, fontSize: 16)),
                       ),
                     )

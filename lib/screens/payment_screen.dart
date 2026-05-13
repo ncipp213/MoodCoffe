@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
+import 'barcode_screen.dart';
+import 'qris_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
@@ -10,16 +12,11 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  String _selectedPaymentMethod = 'Cash';
+  String _orderType = 'DINE IN';
+  String _paymentMethod = '';
+  final int _shippingCost = 2000;
 
-  final List<Map<String, String>> _paymentMethods = [
-    {'method': 'Cash', 'icon': '💰'},
-    {'method': 'Credit Card', 'icon': '💳'},
-    {'method': 'QRIS', 'icon': '📱'},
-    {'method': 'Bank Transfer', 'icon': '🏦'},
-  ];
-
-  String _formatPrice(int price) {
+  String formatPrice(int price) {
     return 'Rp ${price.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
   }
 
@@ -27,15 +24,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
     final cartItems = cartProvider.items;
-    final totalPrice = cartProvider.totalPrice;
+    final subtotal = cartProvider.totalPrice;
+    final total = subtotal + _shippingCost;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF0F0),
       appBar: AppBar(
-        title: const Text(
-          'Payment',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Payment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF6F4E37),
         elevation: 0,
         leading: IconButton(
@@ -44,167 +39,203 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
       ),
       body: cartItems.isEmpty
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('Keranjang kosong', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                  SizedBox(height: 8),
-                  Text('Tambahkan pesanan terlebih dahulu', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                ],
-              ),
-            )
+          ? const Center(child: Text('Keranjang kosong', style: TextStyle(fontSize: 16)))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Ringkasan Pesanan
-                  const Text(
-                    'Ringkasan Pesanan',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF3E2723)),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2))],
-                    ),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: cartItems.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
-                      itemBuilder: (context, index) {
-                        final item = cartItems[index];
-                        return Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  item.imageUrl,
-                                  width: 50,
-                                  height: 50,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    width: 50,
-                                    height: 50,
-                                    color: Colors.brown.shade100,
-                                    child: const Icon(Icons.local_cafe, color: Colors.brown),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                    Text('${item.milk} • ${item.size}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                                    Text('Jumlah: ${item.quantity}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                _formatPrice(item.price * item.quantity),
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF6F4E37)),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                  // Tipe Pemesanan
+                  const Text('Tipe Pemesanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF3E2723))),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(child: _buildOrderTypeCard('DINE IN', Icons.restaurant, _orderType == 'DINE IN')),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildOrderTypeCard('TAKE AWAY', Icons.shopping_bag, _orderType == 'TAKE AWAY')),
+                    ],
                   ),
                   const SizedBox(height: 24),
+
                   // Metode Pembayaran
-                  const Text(
-                    'Metode Pembayaran',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF3E2723)),
-                  ),
+                  const Text('Metode Pembayaran', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF3E2723))),
+                  const SizedBox(height: 8),
+                  _buildPaymentMethodCard('BAYAR DI KASIR', Icons.payments, _paymentMethod == 'BAYAR DI KASIR'),
                   const SizedBox(height: 12),
+                  _buildPaymentMethodCard('QRIS', Icons.qr_code_scanner, _paymentMethod == 'QRIS'),
+                  const SizedBox(height: 30),
+
+                  // Container Rincian Pesanan + Total
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2))],
-                    ),
-                    child: Column(
-                      children: _paymentMethods.map((method) {
-                        return RadioListTile<String>(
-                          title: Text(method['method']!),
-                          secondary: Text(method['icon']!, style: const TextStyle(fontSize: 24)),
-                          value: method['method']!,
-                          groupValue: _selectedPaymentMethod,
-                          onChanged: (value) => setState(() => _selectedPaymentMethod = value!),
-                          activeColor: const Color(0xFF6F4E37),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  // Total + Tombol Bayar
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, -2))],
                     ),
                     child: Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Total Pembayaran', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                            Text(
-                              _formatPrice(totalPrice),
-                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF6F4E37)),
+                        // Daftar pesanan
+                        if (cartItems.isNotEmpty) ...[
+                          const Padding(
+                            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text('Pesanan Anda', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 55,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6F4E37),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            onPressed: () {
-                              // Proses pembayaran (contoh: tampilkan dialog sukses)
-                              showDialog(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                  title: const Text('Pembayaran Berhasil'),
-                                  content: Text('Metode: $_selectedPaymentMethod\nTotal: ${_formatPrice(totalPrice)}'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context); // tutup dialog
-                                        Navigator.pop(context); // kembali ke halaman sebelumnya (cart/detail)
-                                      },
-                                      child: const Text('OK'),
+                          ),
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: cartItems.length,
+                            separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                            itemBuilder: (context, index) {
+                              final item = cartItems[index];
+                              final subtotalItem = item.price * item.quantity;
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      flex: 3,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                          Text('${item.milk} • ${item.size}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                          Text('Jumlah: ${item.quantity}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(formatPrice(item.price), style: const TextStyle(fontSize: 12)),
+                                          const SizedBox(height: 4),
+                                          Text(formatPrice(subtotalItem), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF6F4E37))),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
                               );
                             },
-                            child: const Text('Bayar Sekarang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ),
+                          const Divider(height: 1, thickness: 1),
+                        ],
+                        // Rincian Biaya
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              _buildPriceRow('Shipping cost', formatPrice(_shippingCost)),
+                              const SizedBox(height: 8),
+                              _buildPriceRow('Subtotal', formatPrice(subtotal)),
+                              const Divider(height: 24, thickness: 1),
+                              _buildPriceRow('Total', formatPrice(total), isTotal: true),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
+
+                  // Tombol Place order
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6F4E37),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ).copyWith(
+                        overlayColor: MaterialStateProperty.resolveWith<Color?>((states) {
+                          if (states.contains(MaterialState.pressed)) return Colors.white.withOpacity(0.3);
+                          return null;
+                        }),
+                        backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                          if (states.contains(MaterialState.pressed)) return const Color(0xFF8D6E63);
+                          return const Color(0xFF6F4E37);
+                        }),
+                      ),
+                      onPressed: _paymentMethod.isEmpty
+                          ? null
+                          : () {
+                              if (_paymentMethod == 'BAYAR DI KASIR') {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => const BarcodeScreen()));
+                              } else if (_paymentMethod == 'QRIS') {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => const QrisScreen()));
+                              }
+                            },
+                      child: const Text('Place order', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  if (_paymentMethod.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text('Pilih metode pembayaran terlebih dahulu', style: TextStyle(color: Colors.red, fontSize: 12)),
+                    ),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildOrderTypeCard(String title, IconData icon, bool isSelected) {
+    return GestureDetector(
+      onTap: () => setState(() => _orderType = title),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6F4E37) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? Colors.transparent : Colors.grey.shade300),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: isSelected ? Colors.white : const Color(0xFF6F4E37), size: 28),
+            const SizedBox(height: 6),
+            Text(title, style: TextStyle(color: isSelected ? Colors.white : const Color(0xFF3E2723), fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodCard(String title, IconData icon, bool isSelected) {
+    return GestureDetector(
+      onTap: () => setState(() => _paymentMethod = title),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6F4E37).withOpacity(0.1) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? const Color(0xFF6F4E37) : Colors.grey.shade300),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? const Color(0xFF6F4E37) : Colors.grey.shade600),
+            const SizedBox(width: 12),
+            Text(title, style: TextStyle(color: isSelected ? const Color(0xFF6F4E37) : const Color(0xFF3E2723), fontWeight: FontWeight.w500)),
+            const Spacer(),
+            if (isSelected) const Icon(Icons.check_circle, color: Color(0xFF6F4E37), size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriceRow(String label, String value, {bool isTotal = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(fontSize: isTotal ? 18 : 14, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
+        Text(value, style: TextStyle(fontSize: isTotal ? 18 : 14, fontWeight: isTotal ? FontWeight.bold : FontWeight.w500)),
+      ],
     );
   }
 }
