@@ -5,6 +5,7 @@ import '../widgets/coffee_card.dart';
 import '../providers/cart_provider.dart';
 import 'detail_screen.dart';
 import 'cart_screen.dart';
+import 'favorite_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String username;
@@ -19,7 +20,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
-  // Logika Filter Pencarian dan Kategori
   List<Coffee> get _filteredCoffee {
     List<Coffee> filtered = coffeeList;
     if (_selectedCategory != 'all') {
@@ -47,7 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // Header: Salam, Notifikasi, Search, Banner, dan Filter
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -118,8 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            
-            // Bagian Recommended (Horizontal List)
             SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
-                    height: 250, // Tinggi ditambah agar tidak overflow
+                    height: 250,
                     child: ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       scrollDirection: Axis.horizontal,
@@ -145,8 +142,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-
-            // Bagian Menu Utama (Grid View)
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverToBoxAdapter(
@@ -160,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 0.68, // DIPERBAIKI: Rasio dikecilkan agar kotak lebih panjang dan tidak kuning
+                        childAspectRatio: 0.68,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
                       ),
@@ -174,12 +169,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 100)), // Spacer bawah
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),
       ),
-
-      // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF6F4E37),
@@ -188,7 +181,6 @@ class _HomeScreenState extends State<HomeScreen> {
         items: [
           const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           const BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: 'Favorites'),
-          // Ikon Cart dengan Badge Notifikasi otomatis
           BottomNavigationBarItem(
             icon: Consumer<CartProvider>(
               builder: (context, cart, child) {
@@ -205,7 +197,12 @@ class _HomeScreenState extends State<HomeScreen> {
           const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
         onTap: (index) {
-          if (index == 2) { // Navigasi ke Halaman Cart
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FavoriteScreen()),
+            );
+          } else if (index == 2) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const CartScreen()),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/coffee.dart';
 import '../providers/cart_provider.dart';
+import '../providers/favorite_provider.dart';
+import 'payment_screen.dart';
 
 class CoffeeDetailScreen extends StatefulWidget {
   final Coffee coffee;
@@ -15,78 +17,50 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
   String selectedMilk = 'Classic';
   String selectedSize = '370ml';
 
+  void _addToCart() {
+    Provider.of<CartProvider>(context, listen: false).addItem(
+      widget.coffee,
+      selectedMilk,
+      selectedSize,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${widget.coffee.name} ditambahkan ke keranjang'),
+        backgroundColor: const Color(0xFF6F4E37),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _orderNow() {
+    Provider.of<CartProvider>(context, listen: false).addItem(
+      widget.coffee,
+      selectedMilk,
+      selectedSize,
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const PaymentScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final favoriteProvider = Provider.of<FavoriteProvider>(context);
+    final isFav = favoriteProvider.isFavorite(widget.coffee);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF0F0),
-      // MENGGUNAKAN bottomNavigationBar AGAR TOMBOL PASTI BISA DIKLIK
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, -5),
-            )
-          ],
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          height: 60,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF424242),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              elevation: 0,
-            ),
-            onPressed: () {
-              // FUNGSI ORDER NOW
-              Provider.of<CartProvider>(context, listen: false).addItem(
-                widget.coffee,
-                selectedMilk,
-                selectedSize,
-              );
-              
-              // NOTIFIKASI
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("${widget.coffee.name} berhasil ditambah!"),
-                  backgroundColor: const Color(0xFF6F4E37),
-                  duration: const Duration(seconds: 1),
-                ),
-              );
-            },
-            child: const Text(
-              "Order now",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. BAGIAN FOTO (Full Lebar)
             Stack(
               children: [
                 SizedBox(
                   height: screenHeight * 0.4,
                   width: double.infinity,
-                  child: Image.network(
-                    widget.coffee.imageUrl,
-                    fit: BoxFit.cover, // FOTO FULL MEMENUHI AREA
-                  ),
+                  child: Image.network(widget.coffee.imageUrl, fit: BoxFit.cover),
                 ),
                 SafeArea(
                   child: Padding(
@@ -103,7 +77,15 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
                         ),
                         CircleAvatar(
                           backgroundColor: Colors.white.withOpacity(0.7),
-                          child: const Icon(Icons.favorite_border, color: Colors.black),
+                          child: IconButton(
+                            icon: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_border,
+                              color: isFav ? Colors.red : Colors.black,
+                            ),
+                            onPressed: () {
+                              favoriteProvider.toggleFavorite(widget.coffee);
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -111,8 +93,6 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
                 ),
               ],
             ),
-
-            // 2. BAGIAN DETAIL KONTEN
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(25),
@@ -150,7 +130,6 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
                     style: const TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                   const SizedBox(height: 25),
-
                   const Text("Milk", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Row(
@@ -162,7 +141,6 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 25),
-
                   const Text("Size", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Row(
@@ -173,8 +151,45 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
                       _buildOptionChip("450ml", selectedSize == "450ml", (val) => setState(() => selectedSize = val)),
                     ],
                   ),
-                  const SizedBox(height: 40), 
+                  const SizedBox(height: 40),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF424242),
+                  side: const BorderSide(color: Color(0xFF424242)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+                onPressed: _addToCart,
+                child: const Text("Add to Cart", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF424242),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+                onPressed: _orderNow,
+                child: const Text("Order Now", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],

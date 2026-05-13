@@ -131,7 +131,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.17.0"
-<<<<<<< HEAD
   nested:
     dependency: transitive
     description:
@@ -140,8 +139,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
-=======
->>>>>>> 60459809872a5c2a90c67ba86abd86e02bbc4222
   path:
     dependency: transitive
     description:

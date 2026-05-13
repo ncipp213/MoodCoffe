@@ -7,34 +7,31 @@ class CartProvider with ChangeNotifier {
 
   List<CartItem> get items => _items;
 
-  // Menghitung total harga
   int get totalAmount {
     return _items.fold(0, (sum, item) => sum + (item.price * item.quantity));
   }
 
-  // Alias untuk totalAmount agar sinkron dengan file lain
   int get totalPrice => totalAmount;
 
-  // FUNGSI UTAMA: Tambah ke Keranjang
+  // Helper: ekstrak angka dari string harga (contoh: "Rp 28.000" -> 28000)
+  int _extractNumberFromPrice(String priceString) {
+    final numeric = priceString.replaceAll(RegExp(r'[^0-9]'), '');
+    return int.tryParse(numeric) ?? 0;
+  }
+
   void addItem(Coffee coffee, String milk, String size) {
-    // Cek apakah item dengan kombinasi yang sama sudah ada
     int index = _items.indexWhere((i) => 
       i.name == coffee.name && i.milk == milk && i.size == size);
 
     if (index >= 0) {
-      // Jika sudah ada, cukup tambah jumlahnya
       _items[index].quantity += 1;
     } else {
-      // Jika belum ada, buat CartItem baru
       _items.add(
         CartItem(
-          // Menambahkan ID unik menggunakan timestamp agar tidak error 'missing_required_argument'
-          id: DateTime.now().millisecondsSinceEpoch.toString(), 
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
           name: coffee.name,
-          // Mengonversi String harga ke Integer agar bisa dihitung
-          price: int.parse(coffee.price), 
-          // Pastikan menggunakan 'image' atau 'imageUrl' sesuai model Coffee kamu
-          imageUrl: coffee.imageUrl, 
+          price: _extractNumberFromPrice(coffee.price), // ← perbaikan di sini
+          imageUrl: coffee.imageUrl,
           milk: milk,
           size: size,
           quantity: 1,
@@ -44,7 +41,6 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Fungsi update jumlah (tambah/kurang)
   void updateQuantity(int index, bool isIncrement) {
     if (isIncrement) {
       _items[index].quantity++;
@@ -56,13 +52,11 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Fungsi hapus item
   void removeItem(int index) {
     _items.removeAt(index);
     notifyListeners();
   }
 
-  // Fungsi bantuan jika kamu masih menggunakan parameter CartItem langsung
   void addToCart(CartItem newItem) {
     int index = _items.indexWhere((i) => 
       i.name == newItem.name && i.milk == newItem.milk && i.size == newItem.size);
