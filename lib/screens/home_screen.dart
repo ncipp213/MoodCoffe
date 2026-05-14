@@ -6,6 +6,7 @@ import '../providers/cart_provider.dart';
 import 'detail_screen.dart';
 import 'cart_screen.dart';
 import 'favorite_screen.dart';
+import 'profil_screen.dart';  // import profile screen
 
 class HomeScreen extends StatefulWidget {
   final String username;
@@ -99,7 +100,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            // Recommended for you (hanya tampil jika tidak sedang mencari)
             if (!isSearching) ...[
               SliverToBoxAdapter(
                 child: Column(
@@ -127,7 +127,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ],
-            // Menu Kopi (selalu tampil, dengan hasil filter)
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverToBoxAdapter(
@@ -196,6 +195,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const FavoriteScreen()));
           } else if (index == 2) {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const CartScreen()));
+          } else if (index == 3) {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
           }
         },
       ),

@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/favorite_provider.dart';
+import 'providers/user_provider.dart';   // import UserProvider
 import 'screens/login_screen.dart';
+
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => FavoriteProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()), // UserProvider ditambahkan
       ],
       child: const CoffeeShopApp(),
     ),
@@ -33,6 +36,5 @@ class CoffeeShopApp extends StatelessWidget {
       ),
       home: const LoginScreen(),
     );
-    
   }
 }
