@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  image_picker: ^1.0.7
 
   # Ikon standar Cupertino untuk iOS style
   cupertino_icons: ^1.0.8

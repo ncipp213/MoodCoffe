@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/favorite_provider.dart';
 import 'screens/login_screen.dart';
-
 void main() {
   runApp(
     MultiProvider(
@@ -34,5 +33,6 @@ class CoffeeShopApp extends StatelessWidget {
       ),
       home: const LoginScreen(),
     );
+    
   }
 }
