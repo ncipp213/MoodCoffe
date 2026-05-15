@@ -70,7 +70,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2))],
+                      boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2))],
                     ),
                     child: Column(
                       children: [
@@ -154,7 +154,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ).copyWith(
                         overlayColor: MaterialStateProperty.resolveWith<Color?>((states) {
-                          if (states.contains(MaterialState.pressed)) return Colors.white.withOpacity(0.3);
+                          if (states.contains(MaterialState.pressed)) return Colors.white.withValues(alpha: 0.3);
                           return null;
                         }),
                         backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
@@ -212,7 +212,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6F4E37).withOpacity(0.1) : Colors.white,
+          color: isSelected ? const Color(0xFF6F4E37).withValues(alpha: 0.1) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: isSelected ? const Color(0xFF6F4E37) : Colors.grey.shade300),
         ),

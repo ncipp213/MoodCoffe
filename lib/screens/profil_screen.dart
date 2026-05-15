@@ -70,7 +70,7 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundColor: const Color(0xFF6F4E37).withOpacity(0.2),
+                    backgroundColor: const Color(0xFF6F4E37).withValues(alpha: 0.2),
                     backgroundImage: (photoPath.isNotEmpty && File(photoPath).existsSync())
                         ? FileImage(File(photoPath))
                         : null,
@@ -113,7 +113,7 @@ class ProfileScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: Colors.grey.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),

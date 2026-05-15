@@ -130,7 +130,7 @@ class _QrisScreenState extends State<QrisScreen> {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: coffeeBrown.withOpacity(0.1),
+                    color: coffeeBrown.withValues(alpha: 0.1),
                     blurRadius: 10,
                     spreadRadius: 2,
                   )
