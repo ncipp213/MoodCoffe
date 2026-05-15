@@ -1,44 +1,50 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'user.dart';
+part of 'cart_item.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class UserAdapter extends TypeAdapter<User> {
+class CartItemAdapter extends TypeAdapter<CartItem> {
   @override
-  final int typeId = 0;
+  final int typeId = 2;
 
   @override
-  User read(BinaryReader reader) {
+  CartItem read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return User(
-      username: fields[0] as String,
-      email: fields[1] as String,
-      phone: fields[2] as String,
-      address: fields[3] as String,
-      photoPath: fields[4] as String?,
+    return CartItem(
+      id: fields[0] as String,
+      name: fields[1] as String,
+      imageUrl: fields[2] as String,
+      milk: fields[3] as String,
+      size: fields[4] as String,
+      price: fields[5] as int,
+      quantity: fields[6] as int,
     );
   }
 
   @override
-  void write(BinaryWriter writer, User obj) {
+  void write(BinaryWriter writer, CartItem obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(7)
       ..writeByte(0)
-      ..write(obj.username)
+      ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.email)
+      ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.phone)
+      ..write(obj.imageUrl)
       ..writeByte(3)
-      ..write(obj.address)
+      ..write(obj.milk)
       ..writeByte(4)
-      ..write(obj.photoPath);
+      ..write(obj.size)
+      ..writeByte(5)
+      ..write(obj.price)
+      ..writeByte(6)
+      ..write(obj.quantity);
   }
 
   @override
@@ -47,7 +53,7 @@ class UserAdapter extends TypeAdapter<User> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is UserAdapter &&
+      other is CartItemAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

@@ -1,18 +1,37 @@
+// lib/models/coffee.dart
+import 'package:hive/hive.dart';
+
+part 'coffee.g.dart';
+
+@HiveType(typeId: 2)
 class Coffee {
+  @HiveField(0)
   final String id;
+  
+  @HiveField(1)
   final String name;
-  final String description;
+  
+  @HiveField(2)
   final String price;
+  
+  @HiveField(3)
   final String imageUrl;
+  
+  @HiveField(4)
+  final String description;
+  
+  @HiveField(5)
   final String category; // 'hot', 'cold', 'others'
+  
+  @HiveField(6)
   final double rating;
 
   Coffee({
     required this.id,
     required this.name,
-    required this.description,
     required this.price,
     required this.imageUrl,
+    required this.description,
     required this.category,
     this.rating = 4.5,
   });
