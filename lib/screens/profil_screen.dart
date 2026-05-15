@@ -7,6 +7,7 @@ import 'home_screen.dart';
 import 'favorite_screen.dart';
 import 'cart_screen.dart';
 import 'editprofil_screen.dart';
+import 'history_screen.dart'; // Import halaman riwayat
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -120,7 +121,9 @@ class ProfileScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildMenuItem(Icons.history, 'Order History'),
+                  _buildMenuItem(Icons.history, 'Order History', onTap: () {
+                    _navigateTo(context, const OrderHistoryScreen());
+                  }),
                   _buildDivider(),
                   _buildMenuItem(Icons.logout, 'Sign Out', isSignOut: true, onTap: () => _signOut(context)),
                 ],
