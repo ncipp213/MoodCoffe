@@ -1,9 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:barcode_widget/barcode_widget.dart';
 import 'succes_screen.dart';
 
 class BarcodeScreen extends StatefulWidget {
-  const BarcodeScreen({super.key});
+  // Tambahkan parameter di constructor agar bisa menerima data dinamis
+  final String orderId;
+  final int totalPayment;
+
+  const BarcodeScreen({
+    super.key,
+    required this.orderId,
+    required this.totalPayment,
+  });
 
   @override
   State<BarcodeScreen> createState() => _BarcodeScreenState();
@@ -22,7 +31,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsRemaining > 0) {
-        setState(() => _secondsRemaining--);
+        if (mounted) setState(() => _secondsRemaining--);
       } else {
         _timer.cancel();
       }
@@ -39,6 +48,33 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
     int minutes = seconds ~/ 60;
     int remainingSeconds = seconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
+  // Fungsi untuk memformat mata uang rupiah secara manual
+  String _formatRupiah(int amount) {
+    String str = amount.toString();
+    String result = '';
+    int count = 0;
+    for (int i = str.length - 1; i >= 0; i--) {
+      result = str[i] + result;
+      count++;
+      if (count == 3 && i != 0) {
+        result = '.$result';
+        count = 0;
+      }
+    }
+    return 'Rp $result';
+  }
+
+  // Fungsi untuk merapikan tampilan teks barcode dengan spasi (opsional, agar mirip desain asli)
+  String _formatBarcodeText(String text) {
+    if (text.length <= 8) return text;
+    // Memecah string menjadi potongan seperti format di gambar kamu (contoh: 2052026)
+    try {
+      return '${text.substring(0, 8)} ${text.substring(8, text.length - 6)} ${text.substring(text.length - 6)}';
+    } catch (e) {
+      return text; // Jika panjang karakter tidak sesuai, kembalikan teks asli
+    }
   }
 
   @override
@@ -60,7 +96,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // ------------------- BAGIAN LOGO & BARCODE (100% SAMA GAMBAR) -------------------
+              // ------------------- BAGIAN LOGO & BARCODE GARIS -------------------
               const Text(
                 'MOODCOFFEE',
                 style: TextStyle(
@@ -72,7 +108,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'NMID:ID1023304672596', // persis tanpa spasi
+                'NMID:ID1023304672596',
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const Text(
@@ -84,45 +120,46 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                 'BARCODE UNTUK BAYAR DI KASIR',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.5),
               ),
-              const SizedBox(height: 16),
-              // Barcode visual (garis-garis)
+              const SizedBox(height: 24),
+
+              // --- SEKSI BARCODE GARIS-GARIS REAL & DINAMIS ---
               Container(
                 width: double.infinity,
-                height: 100,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 decoration: BoxDecoration(
+                  color: Colors.white,
                   border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(40, (index) {
-                    int heightFactor = (index % 3 == 0) ? 80 : (index % 2 == 0 ? 60 : 40);
-                    return Container(
-                      width: 4,
-                      height: heightFactor.toDouble(),
-                      color: Colors.black,
-                    );
-                  }),
+                child: BarcodeWidget(
+                  barcode: Barcode.code128(), 
+                  data: widget.orderId, // -> Sekarang datanya diambil dari variabel orderId dinamis
+                  width: double.infinity,
+                  height: 90, 
+                  drawText: false, 
+                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                '93600915 1023304672596 010724',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
+
+              // Menampilkan teks nomor barcode secara dinamis
+              Text(
+                _formatBarcodeText(widget.orderId), // -> Teks barcode otomatis berganti sesuai order
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
+                textAlign: TextAlign.center,
               ),
-              // ------------------- AKHIR BAGIAN YANG 100% SAMA -------------------
+              // -------------------------------------------------------------------
 
               const SizedBox(height: 30),
 
-              // Kotak waktu pembayaran (dengan border)
+              // Kotak waktu pembayaran
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFDF0F0),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF6F4E37).withValues(alpha: 0.5)),
+                  border: Border.all(color: const Color(0xFF6F4E37).withOpacity(0.5)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -147,20 +184,23 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Total Pembayaran
+              // Total Pembayaran Dinamis
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFDF0F0),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF6F4E37).withValues(alpha: 0.3)),
+                  border: Border.all(color: const Color(0xFF6F4E37).withOpacity(0.3)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Total Pembayaran', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                    Text('Rp 128.000', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF6F4E37))),
+                    const Text('Total Pembayaran', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                    Text(
+                      _formatRupiah(widget.totalPayment), // -> Nominal pembayaran otomatis berganti
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF6F4E37)),
+                    ),
                   ],
                 ),
               ),
