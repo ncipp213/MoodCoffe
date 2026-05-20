@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/favorite_provider.dart';
-import 'providers/user_provider.dart';   // import UserProvider
+import 'providers/user_provider.dart'; 
+import 'providers/order_counter.dart';
 import 'screens/login_screen.dart';
 
 void main() {
@@ -11,7 +12,8 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => FavoriteProvider()),
-        ChangeNotifierProvider(create: (_) => UserProvider()), // UserProvider ditambahkan
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => OrderCounter()),
       ],
       child: const CoffeeShopApp(),
     ),

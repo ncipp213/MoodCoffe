@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 
-class OrderHistoryScreen extends StatelessWidget {
-  const OrderHistoryScreen({super.key});
+class OrderHistoryScreen extends StatefulWidget {
+  final Map<String, dynamic>? newOrder;
+  
+  const OrderHistoryScreen({super.key, this.newOrder});
 
+  @override
+  State<OrderHistoryScreen> createState() => _OrderHistoryScreenState();
+}
+
+class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   // Data contoh (sudah diurutkan dari terbaru ke terlama)
-  final List<Map<String, dynamic>> orders = const [
+  List<Map<String, dynamic>> orders = [
     {
       'orderId': 'ORD-003',
       'date': '20 Mei 2026',
@@ -41,6 +48,28 @@ class OrderHistoryScreen extends StatelessWidget {
       'orderType': 'DINE IN',
     },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Cek apakah ada order baru yang dikirim
+    if (widget.newOrder != null) {
+      // Tunggu sebentar lalu tambahkan order
+      Future.delayed(const Duration(milliseconds: 100), () {
+        setState(() {
+          orders.insert(0, widget.newOrder!);
+        });
+        // Tampilkan notifikasi
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Pesanan berhasil disimpan ke history'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      });
+    }
+  }
 
   String formatPrice(int price) {
     return 'Rp ${price.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';

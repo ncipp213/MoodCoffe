@@ -30,7 +30,7 @@ class CartProvider with ChangeNotifier {
         CartItem(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           name: coffee.name,
-          price: _extractNumberFromPrice(coffee.price), // ← perbaikan di sini
+          price: _extractNumberFromPrice(coffee.price),
           imageUrl: coffee.imageUrl,
           milk: milk,
           size: size,
@@ -54,6 +54,12 @@ class CartProvider with ChangeNotifier {
 
   void removeItem(int index) {
     _items.removeAt(index);
+    notifyListeners();
+  }
+
+  // ✅ METHOD CLEAR CART (TAMBAHAN)
+  void clearCart() {
+    _items.clear();
     notifyListeners();
   }
 

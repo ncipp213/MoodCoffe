@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
+import '../providers/order_counter.dart';
 import 'barcode_screen.dart';
 import 'qris_screen.dart';
+import 'order_history_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
@@ -18,6 +20,52 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   String formatPrice(int price) {
     return 'Rp ${price.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    return months[month - 1];
+  }
+
+  void _saveOrderToHistory(CartProvider cartProvider, OrderCounter orderCounter) {
+    if (cartProvider.items.isEmpty) return;
+
+    final items = cartProvider.items.map((item) {
+      return {
+        'name': item.name,
+        'price': item.price,
+        'quantity': item.quantity,
+        'size': item.size.isNotEmpty ? item.size : 'Regular',
+        'milk': item.milk,
+      };
+    }).toList();
+
+    final subtotal = cartProvider.totalPrice;
+    final total = subtotal + _shippingCost;
+    final now = DateTime.now();
+    final orderId = orderCounter.nextOrderId;
+
+    final newOrder = {
+      'orderId': orderId,
+      'date': '${now.day} ${_getMonthName(now.month)} ${now.year}',
+      'time': '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+      'items': items,
+      'total': total,
+      'paymentMethod': _paymentMethod,
+      'orderType': _orderType,
+    };
+
+    cartProvider.clearCart();
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OrderHistoryScreen(newOrder: newOrder),
+      ),
+    );
   }
 
   @override
@@ -45,7 +93,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Tipe Pemesanan
                   const Text('Tipe Pemesanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF3E2723))),
                   const SizedBox(height: 8),
                   Row(
@@ -57,7 +104,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Metode Pembayaran
                   const Text('Metode Pembayaran', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF3E2723))),
                   const SizedBox(height: 8),
                   _buildPaymentMethodCard('BAYAR DI KASIR', Icons.payments, _paymentMethod == 'BAYAR DI KASIR'),
@@ -65,7 +111,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   _buildPaymentMethodCard('QRIS', Icons.qr_code_scanner, _paymentMethod == 'QRIS'),
                   const SizedBox(height: 30),
 
-                  // Container Rincian Pesanan + Total
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -74,7 +119,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
                     child: Column(
                       children: [
-                        // Daftar pesanan
                         if (cartItems.isNotEmpty) ...[
                           const Padding(
                             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -125,7 +169,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                           const Divider(height: 1, thickness: 1),
                         ],
-                        // Rincian Biaya
                         Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -143,7 +186,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // Tombol Place order
                   SizedBox(
                     width: double.infinity,
                     height: 55,
@@ -165,11 +207,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       onPressed: _paymentMethod.isEmpty
                           ? null
                           : () {
-                              if (_paymentMethod == 'BAYAR DI KASIR') {
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => const BarcodeScreen()));
-                              } else if (_paymentMethod == 'QRIS') {
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => const QrisScreen()));
-                              }
+                              final orderCounter = Provider.of<OrderCounter>(context, listen: false);
+                              _saveOrderToHistory(cartProvider, orderCounter);
                             },
                       child: const Text('Place order', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
