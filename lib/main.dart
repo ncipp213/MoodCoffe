@@ -11,20 +11,31 @@ import 'models/coffee.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Inisialisasi Hive
   await Hive.initFlutter();
-  
-  // Daftarkan adapters
-  Hive.registerAdapter(UserAdapter());
-  Hive.registerAdapter(CartItemAdapter());
-  Hive.registerAdapter(CoffeeAdapter());
-  
+
+  // Daftarkan adapters dengan aman (cegah duplikasi typeId)
+  final userAdapter = UserAdapter();
+  if (!Hive.isAdapterRegistered(userAdapter.typeId)) {
+    Hive.registerAdapter(userAdapter);
+  }
+
+  final cartItemAdapter = CartItemAdapter();
+  if (!Hive.isAdapterRegistered(cartItemAdapter.typeId)) {
+    Hive.registerAdapter(cartItemAdapter);
+  }
+
+  final coffeeAdapter = CoffeeAdapter();
+  if (!Hive.isAdapterRegistered(coffeeAdapter.typeId)) {
+    Hive.registerAdapter(coffeeAdapter);
+  }
+
   // Buka boxes
   await Hive.openBox<User>('userBox');
   await Hive.openBox<CartItem>('cartBox');
   await Hive.openBox<Coffee>('favoritesBox');
-  
+
   runApp(
     MultiProvider(
       providers: [
