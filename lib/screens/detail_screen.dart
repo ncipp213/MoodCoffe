@@ -121,14 +121,14 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         CircleAvatar(
-                          backgroundColor: Colors.white.withOpacity(0.7),
+                          backgroundColor: Colors.white.withValues(alpha: 0.7),
                           child: IconButton(
                             icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
                         CircleAvatar(
-                          backgroundColor: Colors.white.withOpacity(0.7),
+                          backgroundColor: Colors.white.withValues(alpha: 0.7),
                           child: IconButton(
                             icon: Icon(
                               isFav ? Icons.favorite : Icons.favorite_border,

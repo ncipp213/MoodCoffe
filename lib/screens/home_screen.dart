@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6F4E37).withOpacity(0.1),
+                            color: const Color(0xFF6F4E37).withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.notifications_none, color: Color(0xFF6F4E37)),

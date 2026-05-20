@@ -122,7 +122,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFFDF0F0),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF6F4E37).withOpacity(0.5)),
+                  border: Border.all(color: const Color(0xFF6F4E37).withValues(alpha: 0.5)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -154,7 +154,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFFDF0F0),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF6F4E37).withOpacity(0.3)),
+                  border: Border.all(color: const Color(0xFF6F4E37).withValues(alpha: 0.3)),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

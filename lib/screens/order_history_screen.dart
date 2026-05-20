@@ -109,7 +109,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2)),
               ],
             ),
             child: Row(
@@ -186,7 +186,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF6F4E37).withOpacity(0.1),
+                                      color: const Color(0xFF6F4E37).withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
@@ -253,9 +253,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: orderTypeColor.withOpacity(0.1),
+                                      color: orderTypeColor.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: orderTypeColor.withOpacity(0.5)),
+                                      border: Border.all(color: orderTypeColor.withValues(alpha: 0.5)),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,

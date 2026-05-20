@@ -13,7 +13,6 @@ class CartProvider with ChangeNotifier {
 
   int get totalPrice => totalAmount;
 
-  // Helper: ekstrak angka dari string harga (contoh: "Rp 28.000" -> 28000)
   int _extractNumberFromPrice(String priceString) {
     final numeric = priceString.replaceAll(RegExp(r'[^0-9]'), '');
     return int.tryParse(numeric) ?? 0;
@@ -57,7 +56,6 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ METHOD CLEAR CART (TAMBAHAN)
   void clearCart() {
     _items.clear();
     notifyListeners();
