@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart'; // pastikan file home_screen.dart ada di folder yang sama
+import 'home_screen.dart';
 
 class SuccessScreen extends StatelessWidget {
-  const SuccessScreen({super.key});
+  final Map<String, dynamic>? orderData; // Menampung data orderan
+
+  const SuccessScreen({super.key, this.orderData});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +14,7 @@ class SuccessScreen extends StatelessWidget {
         title: const Text('Sukses', style: TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF6F4E37),
         elevation: 0,
-        automaticallyImplyLeading: false, // tanpa tombol back
+        automaticallyImplyLeading: false,
       ),
       body: Center(
         child: Padding(
@@ -27,11 +29,9 @@ class SuccessScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF3E2723)),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Terima kasih sudah memesan di MoodCoffee.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
+              // Menampilkan ID Order jika ada
+              if (orderData != null)
+                Text('ID Pesanan: ${orderData!['orderId']}', style: const TextStyle(fontSize: 16, color: Colors.black54)),
               const SizedBox(height: 40),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -40,7 +40,6 @@ class SuccessScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                 ),
                 onPressed: () {
-                  // Hapus semua halaman sebelumnya dan navigasi ke HomeScreen
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => const HomeScreen(username: 'Afiiwwww')),

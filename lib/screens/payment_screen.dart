@@ -7,7 +7,14 @@ import 'qris_screen.dart';
 import 'order_history_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
-  const PaymentScreen({super.key});
+  final List<dynamic> cartItems; // Tambahkan ini
+  final double totalAmount;      // Tambahkan ini
+
+  const PaymentScreen({
+    super.key, 
+    required this.cartItems, // Tambahkan ini
+    required this.totalAmount, // Tambahkan ini
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -30,6 +37,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return months[month - 1];
   }
 
+  // === BAGIAN UTAMA YANG DIUBAH LOGIKANYA ===
   void _saveOrderToHistory(CartProvider cartProvider, OrderCounter orderCounter) {
     if (cartProvider.items.isEmpty) return;
 
@@ -48,6 +56,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final now = DateTime.now();
     final orderId = orderCounter.nextOrderId;
 
+    // Membuat cetakan data order baru
     final newOrder = {
       'orderId': orderId,
       'date': '${now.day} ${_getMonthName(now.month)} ${now.year}',
@@ -58,14 +67,43 @@ class _PaymentScreenState extends State<PaymentScreen> {
       'orderType': _orderType,
     };
 
+    // Bersihkan keranjang belanja
     cartProvider.clearCart();
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OrderHistoryScreen(newOrder: newOrder),
-      ),
-    );
+    // Cek metode pembayaran yang dipilih user
+    if (_paymentMethod == 'BAYAR DI KASIR') {
+      // Jika milih BAYAR DI KASIR, arahkan ke BarcodeScreen sambil membawa data dinamisnya
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BarcodeScreen(
+            orderId: orderId,
+            totalPayment: total.toInt(),
+            newOrder: newOrder, 
+          ),
+        ),
+      );
+    } else if (_paymentMethod == 'QRIS') {
+      // Jika milih QRIS, arahkan ke QrisScreen membawa data dinamisnya
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => QrisScreen(
+            orderId: orderId,
+            totalPayment: total.toInt(),
+            newOrder: newOrder,
+          ),
+        ),
+      );
+    } else {
+      // Cadangan default jika pilihan metode pembayaran lainnya lolos
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OrderHistoryScreen(newOrder: newOrder),
+        ),
+      );
+    }
   }
 
   @override

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
-import 'payment_screen.dart'; // import halaman payment
+import 'payment_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -9,6 +9,15 @@ class CartScreen extends StatelessWidget {
   String formatPrice(double price) {
     return price.toInt().toString().replaceAllMapped(
         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+  }
+
+  // FUNGSI UNTUK HITUNG TOTAL MANUAL
+  double hitungTotal(List items) {
+    double total = 0;
+    for (var item in items) {
+      total += item.price * item.quantity;
+    }
+    return total;
   }
 
   @override
@@ -31,6 +40,9 @@ class CartScreen extends StatelessWidget {
           if (cart.items.isEmpty) {
             return const Center(child: Text("Keranjang masih kosong nih."));
           }
+
+          // HITUNG TOTAL MANUAL
+          final totalManual = hitungTotal(cart.items);
 
           return Column(
             children: [
@@ -103,7 +115,7 @@ class CartScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text("Total Payment", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text("Rp ${formatPrice(cart.totalAmount.toDouble())}",
+                        Text("Rp ${formatPrice(totalManual)}",  // <-- PAKAI totalManual
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF6F4E37))),
                       ],
                     ),
@@ -114,22 +126,30 @@ class CartScreen extends StatelessWidget {
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6F4E37),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                         ),
                         onPressed: () {
-                      
-                          // Navigasi ke halaman PaymentScreen
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const PaymentScreen()),
+                            MaterialPageRoute(
+                              builder: (context) => PaymentScreen(
+                                cartItems: cart.items,
+                                totalAmount: totalManual,  // <-- PAKAI totalManual
+                              ),
+                            ),
                           );
                         },
-                        child: const Text("Payment", style: TextStyle(color: Colors.white, fontSize: 16)),
+                        child: const Text(
+                          "Payment",
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
                       ),
-                    )
+                    ),
                   ],
                 ),
-              )
+              ),
             ],
           );
         },

@@ -73,7 +73,7 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
     );
   }
 
-  void _orderNow() {
+ void _orderNow() {
     final currentPrice = getCurrentPrice();
     final coffeeWithPrice = Coffee(
       id: widget.coffee.id,
@@ -84,14 +84,22 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
       category: widget.coffee.category,
       rating: widget.coffee.rating,
     );
-    Provider.of<CartProvider>(context, listen: false).addItem(
+    
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    cartProvider.addItem(
       coffeeWithPrice,
       selectedMilk,
       selectedSize,
     );
+
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const PaymentScreen()),
+      MaterialPageRoute(
+        builder: (context) => PaymentScreen(
+          cartItems: cartProvider.items,
+          totalAmount: cartProvider.totalPrice.toDouble(),
+        ),
+      ),
     );
   }
 

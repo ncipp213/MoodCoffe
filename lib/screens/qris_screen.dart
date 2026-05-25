@@ -1,11 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; //
-import '../providers/cart_provider.dart'; //
-import 'succes_screen.dart'; //
+import 'succes_screen.dart';
 
 class QrisScreen extends StatefulWidget {
-  const QrisScreen({super.key});
+  // === VARIABEL PENAMPUNG DATA DARI PAYMENT SCREEN ===
+  final String? orderId;
+  final int? totalPayment;
+  final Map<String, dynamic>? newOrder;
+
+  const QrisScreen({
+    super.key,
+    this.orderId,
+    this.totalPayment,
+    this.newOrder,
+  });
 
   @override
   State<QrisScreen> createState() => _QrisScreenState();
@@ -49,17 +57,16 @@ class _QrisScreenState extends State<QrisScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // MENGAMBIL DATA DARI PROVIDER TEMANMU
-    final cartProvider = context.watch<CartProvider>(); //
-    final int totalHarga = cartProvider.totalPrice; //
+    // MENGGUNAKAN DATA YANG DIKIRIM OLEH PAYMENT SCREEN (Bukan dari Provider lagi agar tidak Rp 0)
+    final int totalHarga = widget.totalPayment ?? 64000; 
 
     // PALET WARNA COKLAT (Mood Coffee Style)
     const Color coffeeBrown = Color(0xFF6F4E37); // Coklat Kopi
-    const Color darkBrown = Color(0xFF3E2723);   // Coklat Gelap (Ganti Abu-abu)
-    const Color creamBg = Color(0xFFFFF5E1);     // Background Cream
+    const Color darkBrown = Color(0xFF3E2723);   // Coklat Gelap
+    const Color creamBg = Color(0xFFFDF0F0);     // Disesuaikan dengan tone Payment agar seragam
 
     return Scaffold(
-      backgroundColor: creamBg, //
+      backgroundColor: creamBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -84,7 +91,7 @@ class _QrisScreenState extends State<QrisScreen> {
               padding: const EdgeInsets.symmetric(vertical: 15),
               width: double.infinity,
               decoration: BoxDecoration(
-                color: darkBrown, //
+                color: darkBrown,
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Column(
@@ -146,7 +153,7 @@ class _QrisScreenState extends State<QrisScreen> {
             const SizedBox(height: 35),
             const Text("Total Pembayaran", style: TextStyle(fontSize: 16, color: coffeeBrown)),
             
-            // HARGA DARI PROVIDER
+            // TAMPILAN HARGA YANG SUDAH FIXED
             Text(
               "Rp ${totalHarga.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}",
               style: const TextStyle(
@@ -171,11 +178,11 @@ class _QrisScreenState extends State<QrisScreen> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const SuccessScreen()), //
+                            MaterialPageRoute(builder: (context) => const SuccessScreen()),
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: coffeeBrown, //
+                          backgroundColor: coffeeBrown,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         ),
                         child: const Text(
@@ -191,7 +198,7 @@ class _QrisScreenState extends State<QrisScreen> {
                     height: 60,
                     width: 60,
                     decoration: BoxDecoration(
-                      color: darkBrown, //
+                      color: darkBrown,
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: const Icon(Icons.download_rounded, color: Colors.white),
