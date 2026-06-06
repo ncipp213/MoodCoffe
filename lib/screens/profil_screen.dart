@@ -7,7 +7,7 @@ import 'home_screen.dart';
 import 'favorite_screen.dart';
 import 'cart_screen.dart';
 import 'editprofil_screen.dart';
-import 'order_history_screen.dart'; // PERBAIKAN 1: Ganti history_screen.dart
+import 'order_history_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -70,7 +70,7 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundColor: const Color(0xFF6F4E37).withValues(alpha: 0.2),
+                    backgroundColor: const Color(0xFF6F4E37).withOpacity(0.2),
                     backgroundImage: (photoPath.isNotEmpty && File(photoPath).existsSync())
                         ? FileImage(File(photoPath))
                         : null,
@@ -113,7 +113,7 @@ class ProfileScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withValues(alpha: 0.1),
+                    color: Colors.grey.withOpacity(0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -122,7 +122,7 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _buildMenuItem(Icons.history, 'Order History', onTap: () {
-                    _navigateTo(context, OrderHistoryScreen()); // PERBAIKAN 2: Hapus const
+                    _navigateTo(context, OrderHistoryScreen());
                   }),
                   _buildDivider(),
                   _buildMenuItem(Icons.logout, 'Sign Out', isSignOut: true, onTap: () => _signOut(context)),
@@ -146,7 +146,7 @@ class ProfileScreen extends StatelessWidget {
         ],
         onTap: (index) {
           if (index == 0) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => HomeScreen(username: name)));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
           } else if (index == 1) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteScreen()));
           } else if (index == 2) {

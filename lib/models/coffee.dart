@@ -1,29 +1,12 @@
 // lib/models/coffee.dart
-import 'package:hive/hive.dart';
 
-part 'coffee.g.dart';
-
-@HiveType(typeId: 2)
 class Coffee {
-  @HiveField(0)
   final String id;
-  
-  @HiveField(1)
   final String name;
-  
-  @HiveField(2)
-  final String price;
-  
-  @HiveField(3)
+  final String price;      // Bisa diubah ke int jika ingin hitung numerik, biarkan String karena contoh data
   final String imageUrl;
-  
-  @HiveField(4)
   final String description;
-  
-  @HiveField(5)
-  final String category; // 'hot', 'cold', 'others'
-  
-  @HiveField(6)
+  final String category;   // 'hot', 'cold', 'others'
   final double rating;
 
   Coffee({
@@ -35,9 +18,35 @@ class Coffee {
     required this.category,
     this.rating = 4.5,
   });
+
+  /// Konversi objek Coffee ke Map untuk SQLite
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'price': price,
+      'imageUrl': imageUrl,
+      'description': description,
+      'category': category,
+      'rating': rating,
+    };
+  }
+
+  /// Membuat objek Coffee dari Map hasil query SQLite
+  factory Coffee.fromMap(Map<String, dynamic> map) {
+    return Coffee(
+      id: map['id'],
+      name: map['name'],
+      price: map['price'],
+      imageUrl: map['imageUrl'],
+      description: map['description'],
+      category: map['category'],
+      rating: map['rating'],
+    );
+  }
 }
 
-// Data contoh (semua kopi)
+// Data contoh (semua kopi) - tetap bisa digunakan untuk UI
 final List<Coffee> coffeeList = [
   Coffee(
     id: '1',

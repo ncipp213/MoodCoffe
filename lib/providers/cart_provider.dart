@@ -1,75 +1,92 @@
+// lib/providers/cart_provider.dart
 import 'package:flutter/material.dart';
+import '../database/database_helper.dart';
 import '../models/cart_item.dart';
-import '../models/coffee.dart';
 
-class CartProvider with ChangeNotifier {
-  final List<CartItem> _items = [];
+class CartProvider extends ChangeNotifier {
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  List<CartItem> _items = [];
 
   List<CartItem> get items => _items;
 
-  int get totalAmount {
-    return _items.fold(0, (sum, item) => sum + (item.price * item.quantity));
+  /// Total harga semua item di keranjang
+  int get totalAmount => _items.fold(0, (sum, item) => sum + (item.price * item.quantity));
+
+  /// Jumlah item (bukan quantity, tapi jumlah unique item)
+  int get itemCount => _items.length;
+
+  /// Memuat keranjang dari database (panggil saat aplikasi mulai atau setelah perubahan)
+  Future<void> loadCart() async {
+    final db = await _dbHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query('cart_items');
+    _items = maps.map((map) => CartItem.fromMap(map)).toList();
+    notifyListeners();
   }
 
-  int get totalPrice => totalAmount;
-
-  int _extractNumberFromPrice(String priceString) {
-    final numeric = priceString.replaceAll(RegExp(r'[^0-9]'), '');
-    return int.tryParse(numeric) ?? 0;
+  /// Menambahkan item ke keranjang
+  Future<void> addItem(CartItem item) async {
+    // Cek apakah item dengan id yang sama sudah ada? (opsional, bisa dicek dulu)
+    // Untuk kasus ini, kita asumsikan setiap item unik (id berbeda)
+    final db = await _dbHelper.database;
+    await db.insert('cart_items', item.toMap());
+    _items.add(item);
+    notifyListeners();
   }
 
-  void addItem(Coffee coffee, String milk, String size) {
-    int index = _items.indexWhere((i) => 
-      i.name == coffee.name && i.milk == milk && i.size == size);
-
-    if (index >= 0) {
-      _items[index].quantity += 1;
-    } else {
-      _items.add(
-        CartItem(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          name: coffee.name,
-          price: _extractNumberFromPrice(coffee.price),
-          imageUrl: coffee.imageUrl,
-          milk: milk,
-          size: size,
-          quantity: 1,
-        ),
+  /// Memperbarui kuantitas item tertentu
+  Future<void> updateQuantity(String id, int newQuantity) async {
+    final index = _items.indexWhere((item) => item.id == id);
+    if (index != -1) {
+      _items[index].quantity = newQuantity;
+      final db = await _dbHelper.database;
+      await db.update(
+        'cart_items',
+        _items[index].toMap(),
+        where: 'id = ?',
+        whereArgs: [id],
       );
+      notifyListeners();
     }
+  }
+
+  /// Menghapus satu item dari keranjang berdasarkan id
+  Future<void> removeItem(String id) async {
+    final db = await _dbHelper.database;
+    await db.delete('cart_items', where: 'id = ?', whereArgs: [id]);
+    _items.removeWhere((item) => item.id == id);
     notifyListeners();
   }
 
-  void updateQuantity(int index, bool isIncrement) {
-    if (isIncrement) {
-      _items[index].quantity++;
-    } else {
-      if (_items[index].quantity > 1) {
-        _items[index].quantity--;
-      }
-    }
-    notifyListeners();
-  }
-
-  void removeItem(int index) {
-    _items.removeAt(index);
-    notifyListeners();
-  }
-
-  void clearCart() {
+  /// Mengosongkan seluruh keranjang
+  Future<void> clearCart() async {
+    final db = await _dbHelper.database;
+    await db.delete('cart_items');
     _items.clear();
     notifyListeners();
   }
 
-  void addToCart(CartItem newItem) {
-    int index = _items.indexWhere((i) => 
-      i.name == newItem.name && i.milk == newItem.milk && i.size == newItem.size);
-
-    if (index >= 0) {
-      _items[index].quantity += 1;
-    } else {
-      _items.add(newItem);
+  /// Menambah quantity item (convenience method)
+  Future<void> incrementQuantity(String id) async {
+    final index = _items.indexWhere((item) => item.id == id);
+    if (index != -1) {
+      final newQty = _items[index].quantity + 1;
+      await updateQuantity(id, newQty);
     }
-    notifyListeners();
   }
+
+  /// Mengurangi quantity item, jika quantity > 1, jika 1 maka hapus item
+  Future<void> decrementQuantity(String id) async {
+    final index = _items.indexWhere((item) => item.id == id);
+    if (index != -1) {
+      if (_items[index].quantity > 1) {
+        final newQty = _items[index].quantity - 1;
+        await updateQuantity(id, newQty);
+      } else {
+        await removeItem(id);
+      }
+    }
+  }
+
+  /// Mendapatkan jumlah total item (menjumlah semua quantity)
+  int get totalQuantity => _items.fold(0, (sum, item) => sum + item.quantity);
 }

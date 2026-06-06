@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class OrderHistoryScreen extends StatefulWidget {
   final Map<String, dynamic>? newOrder;
-  
   const OrderHistoryScreen({super.key, this.newOrder});
 
   @override
@@ -10,65 +11,59 @@ class OrderHistoryScreen extends StatefulWidget {
 }
 
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
-  // Data contoh (sudah diurutkan dari terbaru ke terlama)
-  List<Map<String, dynamic>> orders = [
-    {
-      'orderId': 'ORD-003',
-      'date': '20 Mei 2026',
-      'time': '19:45',
-      'items': [
-        {'name': 'Americano', 'price': 23000, 'quantity': 1, 'size': '280ml', 'milk': 'Classic'},
-        {'name': 'Cappuccino', 'price': 25000, 'quantity': 1, 'size': '370ml', 'milk': 'Classic'},
-      ],
-      'total': 48000,
-      'paymentMethod': 'QRIS',
-      'orderType': 'DINE IN',
-    },
-    {
-      'orderId': 'ORD-002',
-      'date': '18 Mei 2026',
-      'time': '09:15',
-      'items': [
-        {'name': 'Latte', 'price': 24000, 'quantity': 1, 'size': '370ml', 'milk': 'Almond'},
-      ],
-      'total': 24000,
-      'paymentMethod': 'BAYAR DI KASIR',
-      'orderType': 'TAKE AWAY',
-    },
-    {
-      'orderId': 'ORD-001',
-      'date': '15 Mei 2026',
-      'time': '14:30',
-      'items': [
-        {'name': 'Cappuccino', 'price': 25000, 'quantity': 1, 'size': '370ml', 'milk': 'Classic'},
-        {'name': 'Gula aren', 'price': 23000, 'quantity': 2, 'size': '450ml', 'milk': 'Coconut'},
-      ],
-      'total': 71000,
-      'paymentMethod': 'QRIS',
-      'orderType': 'DINE IN',
-    },
-  ];
+  List<Map<String, dynamic>> orders = [];
 
   @override
   void initState() {
     super.initState();
-    // Cek apakah ada order baru yang dikirim
-    if (widget.newOrder != null) {
-      // Tunggu sebentar lalu tambahkan order
-      Future.delayed(const Duration(milliseconds: 100), () {
-        setState(() {
-          orders.insert(0, widget.newOrder!);
-        });
-        // Tampilkan notifikasi
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Pesanan berhasil disimpan ke history'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? ordersJson = prefs.getString('order_history');
+    if (ordersJson != null) {
+      final List<dynamic> decoded = json.decode(ordersJson);
+      setState(() {
+        orders = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
       });
     }
+    // Setelah load, cek apakah ada order baru
+    if (widget.newOrder != null) {
+      await _addNewOrder(widget.newOrder!);
+    }
+  }
+
+  Future<void> _addNewOrder(Map<String, dynamic> newOrder) async {
+    // Tambahkan ke list di awal (urutan terbaru)
+    orders.insert(0, newOrder);
+    await _saveOrders();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Pesanan berhasil disimpan ke history'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _saveOrders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encoded = json.encode(orders);
+    await prefs.setString('order_history', encoded);
+  }
+
+  Future<void> _clearHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('order_history');
+    setState(() {
+      orders.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Riwayat pesanan dihapus')),
+    );
   }
 
   String formatPrice(int price) {
@@ -84,7 +79,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     final totalSpending = getTotalSpending();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8), // latar abu-abu muda
+      backgroundColor: const Color(0xFFF8F8F8),
       appBar: AppBar(
         title: const Text('Order History', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF6F4E37),
@@ -94,10 +89,32 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          if (orders.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.white),
+              onPressed: () => showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Hapus Riwayat'),
+                  content: const Text('Apakah Anda yakin ingin menghapus semua riwayat pesanan?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _clearHistory();
+                      },
+                      child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
       body: Column(
         children: [
-          // --- Card Header dengan Gradien Warna ---
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -108,29 +125,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2)),
-              ],
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2))],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  '💰 Total Pengeluaran',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                Text(
-                  formatPrice(totalSpending),
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                const Text('💰 Total Pengeluaran', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text(formatPrice(totalSpending), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
               ],
             ),
           ),
-          // --- Daftar Riwayat Pesanan ---
           Expanded(
             child: orders.isEmpty
                 ? const Center(
@@ -154,8 +158,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       final time = order['time'];
                       final paymentMethod = order['paymentMethod'];
                       final orderType = order['orderType'];
-
-                      // Warna aksen berdasarkan tipe pemesanan
                       final Color orderTypeColor = orderType == 'DINE IN' ? Colors.green.shade700 : Colors.orange.shade700;
 
                       return Card(
@@ -168,7 +170,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Baris atas: Tanggal, Jam, dan Order ID
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -186,7 +187,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF6F4E37).withValues(alpha: 0.1),
+                                      color: const Color(0xFF6F4E37).withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
@@ -197,7 +198,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                 ],
                               ),
                               const Divider(height: 20, thickness: 1),
-                              // Daftar item
                               ListView.separated(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
@@ -233,11 +233,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                 },
                               ),
                               const Divider(height: 20, thickness: 1),
-                              // Informasi metode, tipe, dan total
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // Metode pembayaran dengan ikon
                                   Row(
                                     children: [
                                       Icon(
@@ -249,13 +247,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                       Text(paymentMethod, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
                                     ],
                                   ),
-                                  // Tipe pemesanan dengan warna
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: orderTypeColor.withValues(alpha: 0.1),
+                                      color: orderTypeColor.withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: orderTypeColor.withValues(alpha: 0.5)),
+                                      border: Border.all(color: orderTypeColor.withOpacity(0.5)),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -266,7 +263,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                       ],
                                     ),
                                   ),
-                                  // Total pesanan
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [

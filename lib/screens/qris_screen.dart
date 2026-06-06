@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'succes_screen.dart';
+import 'order_history_screen.dart'; // Ganti dengan halaman history
 
 class QrisScreen extends StatefulWidget {
-  // === VARIABEL PENAMPUNG DATA DARI PAYMENT SCREEN ===
   final String? orderId;
   final int? totalPayment;
   final Map<String, dynamic>? newOrder;
@@ -55,15 +54,22 @@ class _QrisScreenState extends State<QrisScreen> {
     return "$minutes:$seconds";
   }
 
+  void _confirmPayment() {
+    // Arahkan langsung ke OrderHistoryScreen dengan data order baru
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OrderHistoryScreen(newOrder: widget.newOrder),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // MENGGUNAKAN DATA YANG DIKIRIM OLEH PAYMENT SCREEN (Bukan dari Provider lagi agar tidak Rp 0)
-    final int totalHarga = widget.totalPayment ?? 64000; 
-
-    // PALET WARNA COKLAT (Mood Coffee Style)
-    const Color coffeeBrown = Color(0xFF6F4E37); // Coklat Kopi
-    const Color darkBrown = Color(0xFF3E2723);   // Coklat Gelap
-    const Color creamBg = Color(0xFFFDF0F0);     // Disesuaikan dengan tone Payment agar seragam
+    final int totalHarga = widget.totalPayment ?? 64000;
+    const Color coffeeBrown = Color(0xFF6F4E37);
+    const Color darkBrown = Color(0xFF3E2723);
+    const Color creamBg = Color(0xFFFDF0F0);
 
     return Scaffold(
       backgroundColor: creamBg,
@@ -84,8 +90,6 @@ class _QrisScreenState extends State<QrisScreen> {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            
-            // BOX TIMER (COKLAT GELAP)
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
               padding: const EdgeInsets.symmetric(vertical: 15),
@@ -103,33 +107,27 @@ class _QrisScreenState extends State<QrisScreen> {
                   Text(
                     _formatDuration(_duration),
                     style: const TextStyle(
-                      color: Colors.white, 
-                      fontSize: 22, 
-                      fontWeight: FontWeight.bold
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 40),
-            
-            // LOGO & INFO
             const Text(
               "MOODCOFFEE",
               style: TextStyle(
-                fontSize: 28, 
-                fontWeight: FontWeight.bold, 
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
                 color: coffeeBrown,
-                letterSpacing: 1.5
+                letterSpacing: 1.5,
               ),
             ),
             const Text("NMID : ID1023304672596", style: TextStyle(fontSize: 12, color: darkBrown)),
             const Text("Kasir: A01", style: TextStyle(fontSize: 12, color: darkBrown)),
-
             const SizedBox(height: 25),
-            
-            // QR CODE BOX
             Container(
               padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
@@ -137,7 +135,7 @@ class _QrisScreenState extends State<QrisScreen> {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: coffeeBrown.withValues(alpha: 0.1),
+                    color: coffeeBrown.withOpacity(0.1),
                     blurRadius: 10,
                     spreadRadius: 2,
                   )
@@ -149,23 +147,17 @@ class _QrisScreenState extends State<QrisScreen> {
                 height: 200,
               ),
             ),
-
             const SizedBox(height: 35),
             const Text("Total Pembayaran", style: TextStyle(fontSize: 16, color: coffeeBrown)),
-            
-            // TAMPILAN HARGA YANG SUDAH FIXED
             Text(
               "Rp ${totalHarga.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}",
               style: const TextStyle(
-                fontSize: 26, 
-                fontWeight: FontWeight.bold, 
-                color: coffeeBrown
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: coffeeBrown,
               ),
             ),
-
             const SizedBox(height: 50),
-            
-            // TOMBOL AKSI (COKLAT)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -175,25 +167,19 @@ class _QrisScreenState extends State<QrisScreen> {
                     child: SizedBox(
                       height: 60,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const SuccessScreen()),
-                          );
-                        },
+                        onPressed: _confirmPayment,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: coffeeBrown,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         ),
                         child: const Text(
-                          "Cek Status Pembayaran", 
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+                          "Cek Status Pembayaran",
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // TOMBOL DOWNLOAD
                   Container(
                     height: 60,
                     width: 60,

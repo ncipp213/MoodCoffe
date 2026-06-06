@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 
@@ -13,18 +15,59 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
-  void _login() {
-    if (_emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Harap isi email dan password')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final success = await userProvider.login(email, password);
+      if (success && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email atau password salah')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Terjadi kesalahan: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loginAsGuest() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.saveProfile(
+      name: 'Guest',
+      email: 'guest@example.com',
+      phone: '',
+      address: '',
+      photoPath: '',
+      password: '', // Guest dengan password kosong
+    );
+    if (mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(username: _emailController.text.split('@').first),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Harap isi email/phone dan password')),
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     }
   }
@@ -34,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: AssetImage('assets/cover.jpeg'), // Gunakan gambar lokal dari folder assets
+          image: const AssetImage('assets/cover.jpeg'),
           fit: BoxFit.cover,
         ),
       ),
@@ -47,14 +90,13 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                // Logo / Title
                 Center(
                   child: Column(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF6F4E37).withValues(alpha: 0.2),
+                          color: const Color(0xFF6F4E37).withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.coffee, size: 48, color: Color(0xFF6F4E37)),
@@ -78,7 +120,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Form
                 const Text(
                   'Sign In',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
@@ -89,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'Phone number / email',
+                    labelText: 'Email',
                     labelStyle: const TextStyle(color: Colors.white70),
                     prefixIcon: const Icon(Icons.person_outline, color: Colors.white70),
                     border: OutlineInputBorder(
@@ -105,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderSide: const BorderSide(color: Color(0xFF6F4E37), width: 2),
                     ),
                     filled: true,
-                    fillColor: Colors.black.withValues(alpha: 0.4),
+                    fillColor: Colors.black.withOpacity(0.4),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -137,19 +178,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderSide: const BorderSide(color: Color(0xFF6F4E37), width: 2),
                     ),
                     filled: true,
-                    fillColor: Colors.black.withValues(alpha: 0.4),
+                    fillColor: Colors.black.withOpacity(0.4),
                   ),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _login,
+                  onPressed: _isLoading ? null : _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6F4E37),
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Log In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Log In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -164,12 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const HomeScreen(username: 'Guest')),
-                    );
-                  },
+                  onPressed: _loginAsGuest,
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -182,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text("don't have an account? ", style: TextStyle(color: Colors.white70)),
+                      Text("Don't have an account? ", style: TextStyle(color: Colors.white70)),
                       GestureDetector(
                         onTap: () {
                           Navigator.push(

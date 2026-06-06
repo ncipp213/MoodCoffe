@@ -7,14 +7,11 @@ import 'qris_screen.dart';
 import 'order_history_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
-  final List<dynamic> cartItems; // Tambahkan ini
-  final double totalAmount;      // Tambahkan ini
+  // Parameter opsional (tidak digunakan langsung, biarkan untuk kompatibilitas)
+  final List<dynamic>? cartItems;
+  final double? totalAmount;
 
-  const PaymentScreen({
-    super.key, 
-    required this.cartItems, // Tambahkan ini
-    required this.totalAmount, // Tambahkan ini
-  });
+  const PaymentScreen({super.key, this.cartItems, this.totalAmount});
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -37,8 +34,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return months[month - 1];
   }
 
-  // === BAGIAN UTAMA YANG DIUBAH LOGIKANYA ===
-  void _saveOrderToHistory(CartProvider cartProvider, OrderCounter orderCounter) {
+  Future<void> _saveOrderToHistory(CartProvider cartProvider, OrderCounter orderCounter) async {
     if (cartProvider.items.isEmpty) return;
 
     final items = cartProvider.items.map((item) {
@@ -51,12 +47,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
       };
     }).toList();
 
-    final subtotal = cartProvider.totalPrice;
+    final subtotal = cartProvider.totalAmount; // perbaikan: totalAmount bukan totalPrice
     final total = subtotal + _shippingCost;
     final now = DateTime.now();
     final orderId = orderCounter.nextOrderId;
 
-    // Membuat cetakan data order baru
     final newOrder = {
       'orderId': orderId,
       'date': '${now.day} ${_getMonthName(now.month)} ${now.year}',
@@ -67,36 +62,31 @@ class _PaymentScreenState extends State<PaymentScreen> {
       'orderType': _orderType,
     };
 
-    // Bersihkan keranjang belanja
-    cartProvider.clearCart();
+    await cartProvider.clearCart(); // tambah await karena Future
 
-    // Cek metode pembayaran yang dipilih user
     if (_paymentMethod == 'BAYAR DI KASIR') {
-      // Jika milih BAYAR DI KASIR, arahkan ke BarcodeScreen sambil membawa data dinamisnya
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => BarcodeScreen(
             orderId: orderId,
-            totalPayment: total.toInt(),
-            newOrder: newOrder, 
+            totalPayment: total,
+            newOrder: newOrder,
           ),
         ),
       );
     } else if (_paymentMethod == 'QRIS') {
-      // Jika milih QRIS, arahkan ke QrisScreen membawa data dinamisnya
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => QrisScreen(
             orderId: orderId,
-            totalPayment: total.toInt(),
+            totalPayment: total,
             newOrder: newOrder,
           ),
         ),
       );
     } else {
-      // Cadangan default jika pilihan metode pembayaran lainnya lolos
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -110,7 +100,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
     final cartItems = cartProvider.items;
-    final subtotal = cartProvider.totalPrice;
+    final subtotal = cartProvider.totalAmount; // perbaikan
     final total = subtotal + _shippingCost;
 
     return Scaffold(
@@ -153,7 +143,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2))],
+                      boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2))],
                     ),
                     child: Column(
                       children: [
@@ -234,7 +224,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ).copyWith(
                         overlayColor: MaterialStateProperty.resolveWith<Color?>((states) {
-                          if (states.contains(MaterialState.pressed)) return Colors.white.withValues(alpha: 0.3);
+                          if (states.contains(MaterialState.pressed)) return Colors.white.withOpacity(0.3);
                           return null;
                         }),
                         backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
@@ -244,9 +234,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                       onPressed: _paymentMethod.isEmpty
                           ? null
-                          : () {
+                          : () async {
                               final orderCounter = Provider.of<OrderCounter>(context, listen: false);
-                              _saveOrderToHistory(cartProvider, orderCounter);
+                              await _saveOrderToHistory(cartProvider, orderCounter);
                             },
                       child: const Text('Place order', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
@@ -289,7 +279,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6F4E37).withValues(alpha: 0.1) : Colors.white,
+          color: isSelected ? const Color(0xFF6F4E37).withOpacity(0.1) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: isSelected ? const Color(0xFF6F4E37) : Colors.grey.shade300),
         ),

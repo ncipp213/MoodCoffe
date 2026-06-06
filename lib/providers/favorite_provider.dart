@@ -1,64 +1,72 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import '../database/database_helper.dart';
 import '../models/coffee.dart';
 
-class FavoriteProvider with ChangeNotifier {
-  late Box<Coffee> _favoritesBox;
+class FavoriteProvider extends ChangeNotifier {
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   List<Coffee> _favorites = [];
-
-  FavoriteProvider() {
-    _init();
-  }
-
-  Future<void> _init() async {
-    _favoritesBox = Hive.box<Coffee>('favoritesBox');
-    _loadFavorites();
-  }
-
-  void _loadFavorites() {
-    _favorites = _favoritesBox.values.toList();
-    notifyListeners();
-  }
 
   List<Coffee> get favorites => _favorites;
 
-  bool isFavorite(Coffee coffee) {
-    return _favorites.any((fav) => fav.id == coffee.id);
-  }
+  Future<void> loadFavorites() async {
+    final db = await _dbHelper.database;
+    final List<Map<String, dynamic>> favMaps = await db.query('favorites');
+    final List<String> favIds = favMaps.map((map) => map['coffeeId'] as String).toList();
 
-  // Create & Delete: Toggle favorite
-  Future<void> toggleFavorite(Coffee coffee) async {
-    if (isFavorite(coffee)) {
-      // Delete
-      await _favoritesBox.delete(coffee.id);
-      _favorites.removeWhere((fav) => fav.id == coffee.id);
-    } else {
-      // Create
-      await _favoritesBox.put(coffee.id, coffee);
-      _favorites.add(coffee);
+    if (favIds.isEmpty) {
+      _favorites = [];
+      notifyListeners();
+      return;
     }
+
+    final String placeholders = favIds.map((_) => '?').join(',');
+    final List<Map<String, dynamic>> coffeeMaps = await db.query(
+      'coffees',
+      where: 'id IN ($placeholders)',
+      whereArgs: favIds,
+    );
+    _favorites = coffeeMaps.map((map) => Coffee.fromMap(map)).toList();
     notifyListeners();
   }
 
-  // Create: Add favorite
+  Future<bool> isFavorite(String coffeeId) async {
+    final db = await _dbHelper.database;
+    final List<Map<String, dynamic>> result = await db.query(
+      'favorites',
+      where: 'coffeeId = ?',
+      whereArgs: [coffeeId],
+    );
+    return result.isNotEmpty;
+  }
+
+  Future<void> toggleFavorite(Coffee coffee) async {
+    final exists = await isFavorite(coffee.id);
+    if (exists) {
+      await removeFavorite(coffee.id);
+    } else {
+      await addFavorite(coffee);
+    }
+  }
+
   Future<void> addFavorite(Coffee coffee) async {
-    if (!isFavorite(coffee)) {
-      await _favoritesBox.put(coffee.id, coffee);
+    final db = await _dbHelper.database;
+    await db.insert('favorites', {'coffeeId': coffee.id});
+    if (!_favorites.any((fav) => fav.id == coffee.id)) {
       _favorites.add(coffee);
       notifyListeners();
     }
   }
 
-  // Delete: Remove favorite
-  Future<void> removeFavorite(Coffee coffee) async {
-    await _favoritesBox.delete(coffee.id);
-    _favorites.removeWhere((fav) => fav.id == coffee.id);
+  Future<void> removeFavorite(String coffeeId) async {
+    final db = await _dbHelper.database;
+    await db.delete('favorites', where: 'coffeeId = ?', whereArgs: [coffeeId]);
+    _favorites.removeWhere((fav) => fav.id == coffeeId);
     notifyListeners();
   }
 
-  // Clear all favorites
   Future<void> clearFavorites() async {
-    await _favoritesBox.clear();
+    final db = await _dbHelper.database;
+    await db.delete('favorites');
     _favorites.clear();
     notifyListeners();
   }

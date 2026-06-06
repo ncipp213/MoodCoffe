@@ -3,14 +3,14 @@ import 'package:provider/provider.dart';
 import '../models/coffee.dart';
 import '../widgets/coffee_card.dart';
 import '../providers/cart_provider.dart';
+import '../providers/user_provider.dart';
 import 'detail_screen.dart';
 import 'cart_screen.dart';
 import 'favorite_screen.dart';
-import 'profil_screen.dart';  // import profile screen
+import 'profil_screen.dart'; // 
 
 class HomeScreen extends StatefulWidget {
-  final String username;
-  const HomeScreen({super.key, required this.username});
+  const HomeScreen({super.key}); // tanpa parameter username
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -35,6 +35,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final username = userProvider.username;
     final bool isSearching = _searchQuery.isNotEmpty;
 
     return Scaffold(
@@ -55,13 +57,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text('Hey,', style: TextStyle(fontSize: 14, color: Colors.grey)),
-                            Text(widget.username, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                            Text(username.isEmpty ? 'User' : username,
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                           ],
                         ),
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6F4E37).withValues(alpha: 0.1),
+                            color: const Color(0xFF6F4E37).withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.notifications_none, color: Color(0xFF6F4E37)),

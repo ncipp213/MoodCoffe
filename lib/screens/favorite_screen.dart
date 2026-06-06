@@ -1,28 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:hive/hive.dart';
 import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
+import '../providers/user_provider.dart';
 import '../models/coffee.dart';
+import '../models/cart_item.dart';
 import 'home_screen.dart';
 import 'cart_screen.dart';
 import 'detail_screen.dart';
+import 'profil_screen.dart';
 
 class FavoriteScreen extends StatelessWidget {
   const FavoriteScreen({super.key});
 
   String _formatPrice(dynamic price) {
-    int priceInt = 0;
-    if (price is int) {
-      priceInt = price;
-    } else if (price is String) {
-      priceInt = int.tryParse(price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
-    }
+    int priceInt = _extractPriceInt(price);
     return 'Rp ${priceInt.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+  }
+
+  int _extractPriceInt(dynamic price) {
+    if (price is int) return price;
+    if (price is String) {
+      final numeric = price.replaceAll(RegExp(r'[^0-9]'), '');
+      return int.tryParse(numeric) ?? 0;
+    }
+    return 0;
   }
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final username = userProvider.username.isNotEmpty ? userProvider.username : 'Afiiwwww';
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -57,9 +66,9 @@ class FavoriteScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 10),
-                const Text(
-                  'Hey Afiiwwww',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF3E2723)),
+                Text(
+                  'Hey $username',
+                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF3E2723)),
                 ),
                 const SizedBox(height: 4),
                 const Text(
@@ -117,12 +126,17 @@ class FavoriteScreen extends StatelessWidget {
           if (index == 0) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const HomeScreen(username: 'Afiiwwww')),
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
             );
           } else if (index == 2) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CartScreen()),
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
             );
           }
         },
@@ -131,7 +145,7 @@ class FavoriteScreen extends StatelessWidget {
   }
 
   Widget _buildFavoriteCard(BuildContext context, Coffee coffee) {
-    final cartProvider = Provider.of<CartProvider>(context);
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -143,7 +157,7 @@ class FavoriteScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.2), spreadRadius: 1, blurRadius: 8, offset: const Offset(0, 4))],
+          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 1, blurRadius: 8, offset: const Offset(0, 4))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,8 +197,18 @@ class FavoriteScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        cartProvider.addItem(coffee, 'Classic', '370ml');
+                      onPressed: () async {
+                        final priceInt = _extractPriceInt(coffee.price);
+                        final cartItem = CartItem(
+                          id: '${coffee.id}_370ml_Classic_${DateTime.now().millisecondsSinceEpoch}',
+                          name: '${coffee.name} (370ml, Classic)',
+                          imageUrl: coffee.imageUrl,
+                          milk: 'Classic',
+                          size: '370ml',
+                          price: priceInt,
+                          quantity: 1,
+                        );
+                        await cartProvider.addItem(cartItem);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('${coffee.name} ditambahkan ke keranjang')),
                         );

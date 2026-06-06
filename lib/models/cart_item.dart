@@ -1,28 +1,12 @@
-import 'package:hive/hive.dart';
+// lib/models/cart_item.dart
 
-part 'cart_item.g.dart'; 
-
-@HiveType(typeId: 2) 
 class CartItem {
-  @HiveField(0)
   final String id;
-  
-  @HiveField(1)
   final String name;
-  
-  @HiveField(2)
   final String imageUrl;
-  
-  @HiveField(3)
   final String milk;
-  
-  @HiveField(4)
   final String size;
-  
-  @HiveField(5)
   final int price;
-  
-  @HiveField(6)
   int quantity;
 
   CartItem({
@@ -34,4 +18,30 @@ class CartItem {
     required this.price,
     this.quantity = 1,
   });
+
+  /// Konversi objek CartItem ke Map untuk SQLite
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'imageUrl': imageUrl,
+      'milk': milk,
+      'size': size,
+      'price': price,
+      'quantity': quantity,
+    };
+  }
+
+  /// Membuat objek CartItem dari Map hasil query SQLite
+  factory CartItem.fromMap(Map<String, dynamic> map) {
+    return CartItem(
+      id: map['id'],
+      name: map['name'],
+      imageUrl: map['imageUrl'],
+      milk: map['milk'],
+      size: map['size'],
+      price: map['price'],
+      quantity: map['quantity'],
+    );
+  }
 }

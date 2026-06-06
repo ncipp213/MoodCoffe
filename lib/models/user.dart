@@ -1,29 +1,47 @@
-import 'package:hive/hive.dart';
+// lib/models/user.dart
 
-part 'user.g.dart'; 
-
-@HiveType(typeId: 0) 
 class User {
-  @HiveField(0)
+  int? id; // Primary key untuk SQLite (auto increment)
   String username;
-  
-  @HiveField(1)
   String email;
-  
-  @HiveField(2)
   String phone;
-  
-  @HiveField(3)
   String address;
-  
-  @HiveField(4)
-  String? photoPath; // Nullable, tidak wajib diisi
+  String? photoPath;
+  String password; // Field password untuk autentikasi
 
   User({
+    this.id,
     required this.username,
     required this.email,
     required this.phone,
     required this.address,
     this.photoPath,
+    required this.password, // Wajib diisi saat membuat User
   });
+
+  /// Konversi objek User ke Map untuk SQLite
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'username': username,
+      'email': email,
+      'phone': phone,
+      'address': address,
+      'photoPath': photoPath,
+      'password': password, // Kolom password disertakan
+    };
+  }
+
+  /// Membuat objek User dari Map hasil query SQLite
+  factory User.fromMap(Map<String, dynamic> map) {
+    return User(
+      id: map['id'],
+      username: map['username'],
+      email: map['email'],
+      phone: map['phone'],
+      address: map['address'],
+      photoPath: map['photoPath'],
+      password: map['password'], // Password diambil dari database
+    );
+  }
 }

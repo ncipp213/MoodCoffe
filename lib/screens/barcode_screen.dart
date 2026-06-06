@@ -1,7 +1,8 @@
+// barcode_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:barcode_widget/barcode_widget.dart';
-import 'succes_screen.dart';
+import 'order_history_screen.dart'; // tambahkan import
 
 class BarcodeScreen extends StatefulWidget {
   final String orderId;
@@ -73,81 +74,80 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
         title: const Text("Payment", style: TextStyle(color: darkBrown, fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 10),
-          // BOX TIMER
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              decoration: BoxDecoration(color: darkBrown, borderRadius: BorderRadius.circular(15)),
-              child: Column(
-                children: [
-                  const Text('Selesaikan Waktu Pembayaran', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                  Text(_formatTime(_secondsRemaining), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                ],
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                decoration: BoxDecoration(color: darkBrown, borderRadius: BorderRadius.circular(15)),
+                child: Column(
+                  children: [
+                    const Text('Selesaikan Waktu Pembayaran', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                    Text(_formatTime(_secondsRemaining), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 30),
-          // LOGO & INFO
-          const Text('MOODCOFFEE', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: coffeeBrown, letterSpacing: 1.5)),
-          const Text('NMID : ID1023304672596', style: TextStyle(fontSize: 12, color: darkBrown)),
-          const SizedBox(height: 20),
-          const Text('BARCODE UNTUK BAYAR DI KASIR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black45)),
-          // BARCODE
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-            child: BarcodeWidget(
-              barcode: Barcode.code128(),
-              data: widget.orderId,
-              height: 100,
-              width: double.infinity,
-              drawText: false,
-            ),
-          ),
-          Text(widget.orderId, style: const TextStyle(fontWeight: FontWeight.w500, color: darkBrown)),
-          const SizedBox(height: 30),
-          // TOTAL PEMBAYARAN
-          const Text('Total Pembayaran', style: TextStyle(fontSize: 16, color: coffeeBrown)),
-          Text(_formatRupiah(widget.totalPayment), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: coffeeBrown)),
-          
-          const Spacer(), // <--- Ini yang mendorong tombol ke bawah
-
-          // TOMBOL-TOMBOL (Cek Status & Download)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 4,
-                  child: SizedBox(
-                    height: 60,
-                    child: Builder(
-                      builder: (newContext) {
-                        return ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: coffeeBrown, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-                          onPressed: () {
-                            showDialog(context: newContext, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator(color: coffeeBrown)));
-                            Future.delayed(const Duration(milliseconds: 1500), () {
-                              Navigator.pop(newContext);
-                              Navigator.pushReplacement(newContext, MaterialPageRoute(builder: (_) => SuccessScreen(orderData: widget.newOrder)));
-                            });
-                          },
-                          child: const Text('Cek Status Pembayaran', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        );
-                      },
+              const SizedBox(height: 30),
+              const Text('MOODCOFFEE', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: coffeeBrown, letterSpacing: 1.5)),
+              const Text('NMID : ID1023304672596', style: TextStyle(fontSize: 12, color: darkBrown)),
+              const SizedBox(height: 20),
+              const Text('BARCODE UNTUK BAYAR DI KASIR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black45)),
+              const SizedBox(height: 10),
+              BarcodeWidget(
+                barcode: Barcode.code128(),
+                data: widget.orderId,
+                height: 100,
+                width: double.infinity,
+                drawText: false,
+              ),
+              const SizedBox(height: 8),
+              Text(widget.orderId, style: const TextStyle(fontWeight: FontWeight.w500, color: darkBrown)),
+              const SizedBox(height: 30),
+              const Text('Total Pembayaran', style: TextStyle(fontSize: 16, color: coffeeBrown)),
+              Text(_formatRupiah(widget.totalPayment), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: coffeeBrown)),
+              const SizedBox(height: 30),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: SizedBox(
+                      height: 60,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: coffeeBrown,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        ),
+                        onPressed: () {
+                          // Langsung arahkan ke OrderHistoryScreen dengan data order
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => OrderHistoryScreen(newOrder: widget.newOrder),
+                            ),
+                          );
+                        },
+                        child: const Text('Cek Status Pembayaran', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Container(height: 60, width: 60, decoration: BoxDecoration(color: darkBrown, borderRadius: BorderRadius.circular(15)), child: const Icon(Icons.download_rounded, color: Colors.white)),
-              ],
-            ),
+                  const SizedBox(width: 12),
+                  Container(
+                    height: 60,
+                    width: 60,
+                    decoration: BoxDecoration(color: darkBrown, borderRadius: BorderRadius.circular(15)),
+                    child: const Icon(Icons.download_rounded, color: Colors.white),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 30),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:hive_flutter/hive_flutter.dart'; // 1. Tambahkan ini
+import 'database/database_helper.dart';
 import 'providers/cart_provider.dart';
 import 'providers/favorite_provider.dart';
-import 'providers/user_provider.dart'; 
+import 'providers/user_provider.dart';
 import 'providers/order_counter.dart';
 import 'screens/login_screen.dart';
 
-void main() async { // 2. Tambahkan async
-  WidgetsFlutterBinding.ensureInitialized(); // 3. Tambahkan ini
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  // 4. Inisialisasi Hive
-  await Hive.initFlutter(); 
-  
-  // 5. Buka box 'order_history' agar selalu tersedia
-  await Hive.openBox('order_history'); 
+  // Inisialisasi database sqflite (membuka koneksi dan membuat tabel jika belum ada)
+  await DatabaseHelper.instance.database;
 
   runApp(
     MultiProvider(

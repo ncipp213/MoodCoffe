@@ -6,18 +6,9 @@ import 'payment_screen.dart';
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
-  String formatPrice(double price) {
-    return price.toInt().toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
-  }
-
-  // FUNGSI UNTUK HITUNG TOTAL MANUAL
-  double hitungTotal(List items) {
-    double total = 0;
-    for (var item in items) {
-      total += item.price * item.quantity;
-    }
-    return total;
+  String formatPrice(int price) {
+    return 'Rp ${price.toString().replaceAllMapped(
+        RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
   }
 
   @override
@@ -41,9 +32,6 @@ class CartScreen extends StatelessWidget {
             return const Center(child: Text("Keranjang masih kosong nih."));
           }
 
-          // HITUNG TOTAL MANUAL
-          final totalManual = hitungTotal(cart.items);
-
           return Column(
             children: [
               Expanded(
@@ -52,7 +40,6 @@ class CartScreen extends StatelessWidget {
                   itemCount: cart.items.length,
                   itemBuilder: (context, index) {
                     final item = cart.items[index];
-                    
                     return Container(
                       margin: const EdgeInsets.only(bottom: 15),
                       padding: const EdgeInsets.all(12),
@@ -72,7 +59,7 @@ class CartScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(item.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                Text("Rp ${formatPrice(item.price.toDouble())}", style: const TextStyle(color: Colors.white70)),
+                                Text(formatPrice(item.price), style: const TextStyle(color: Colors.white70)),
                                 Text(item.milk, style: const TextStyle(color: Colors.white38, fontSize: 11)),
                               ],
                             ),
@@ -80,7 +67,7 @@ class CartScreen extends StatelessWidget {
                           Row(
                             children: [
                               GestureDetector(
-                                onTap: () => cart.updateQuantity(index, false),
+                                onTap: () => cart.decrementQuantity(item.id),
                                 child: const Icon(Icons.remove_circle_outline, color: Colors.white60, size: 20),
                               ),
                               Padding(
@@ -88,14 +75,14 @@ class CartScreen extends StatelessWidget {
                                 child: Text("${item.quantity}", style: const TextStyle(color: Colors.white)),
                               ),
                               GestureDetector(
-                                onTap: () => cart.updateQuantity(index, true),
+                                onTap: () => cart.incrementQuantity(item.id),
                                 child: const Icon(Icons.add_circle, color: Colors.white, size: 20),
                               ),
                             ],
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
-                            onPressed: () => cart.removeItem(index),
+                            onPressed: () => cart.removeItem(item.id),
                           ),
                         ],
                       ),
@@ -115,7 +102,7 @@ class CartScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text("Total Payment", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text("Rp ${formatPrice(totalManual)}",  // <-- PAKAI totalManual
+                        Text(formatPrice(cart.totalAmount),
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF6F4E37))),
                       ],
                     ),
@@ -136,7 +123,7 @@ class CartScreen extends StatelessWidget {
                             MaterialPageRoute(
                               builder: (context) => PaymentScreen(
                                 cartItems: cart.items,
-                                totalAmount: totalManual,  // <-- PAKAI totalManual
+                                totalAmount: cart.totalAmount.toDouble(),
                               ),
                             ),
                           );

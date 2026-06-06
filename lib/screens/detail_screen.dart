@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/coffee.dart';
+import '../models/cart_item.dart';
 import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
 import 'payment_screen.dart';
@@ -17,11 +18,23 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
   String selectedMilk = 'Classic';
   String selectedSize = '370ml';
   int basePrice = 0;
+  bool _isFavorite = false; // State untuk status favorit
 
   @override
   void initState() {
     super.initState();
     basePrice = _extractPrice(widget.coffee.price);
+    _checkFavorite(); // Cek apakah coffee ini favorit
+  }
+
+  Future<void> _checkFavorite() async {
+    final favoriteProvider = Provider.of<FavoriteProvider>(context, listen: false);
+    final isFav = await favoriteProvider.isFavorite(widget.coffee.id);
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFav;
+      });
+    }
   }
 
   int _extractPrice(dynamic price) {
@@ -48,66 +61,62 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
     return 'Rp ${price.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
   }
 
-  void _addToCart() {
-    final currentPrice = getCurrentPrice();
-    final coffeeWithPrice = Coffee(
-      id: widget.coffee.id,
-      name: widget.coffee.name,
-      description: widget.coffee.description,
-      price: currentPrice.toString(),
+  CartItem _buildCartItem() {
+    return CartItem(
+      id: '${widget.coffee.id}_${selectedSize}_${selectedMilk}_${DateTime.now().millisecondsSinceEpoch}',
+      name: '${widget.coffee.name} ($selectedSize, $selectedMilk)',
       imageUrl: widget.coffee.imageUrl,
-      category: widget.coffee.category,
-      rating: widget.coffee.rating,
+      milk: selectedMilk,
+      size: selectedSize,
+      price: getCurrentPrice(),
+      quantity: 1,
     );
-    Provider.of<CartProvider>(context, listen: false).addItem(
-      coffeeWithPrice,
-      selectedMilk,
-      selectedSize,
-    );
+  }
+
+  Future<void> _addToCart() async {
+    final cartItem = _buildCartItem();
+    await Provider.of<CartProvider>(context, listen: false).addItem(cartItem);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${widget.coffee.name} ($selectedSize) ditambahkan ke keranjang'),
+        content: Text('${cartItem.name} ditambahkan ke keranjang'),
         backgroundColor: const Color(0xFF6F4E37),
         duration: const Duration(seconds: 1),
       ),
     );
   }
 
- void _orderNow() {
-    final currentPrice = getCurrentPrice();
-    final coffeeWithPrice = Coffee(
-      id: widget.coffee.id,
-      name: widget.coffee.name,
-      description: widget.coffee.description,
-      price: currentPrice.toString(),
-      imageUrl: widget.coffee.imageUrl,
-      category: widget.coffee.category,
-      rating: widget.coffee.rating,
-    );
-    
+  Future<void> _orderNow() async {
+    final cartItem = _buildCartItem();
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
-    cartProvider.addItem(
-      coffeeWithPrice,
-      selectedMilk,
-      selectedSize,
-    );
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentScreen(
-          cartItems: cartProvider.items,
-          totalAmount: cartProvider.totalPrice.toDouble(),
+    await cartProvider.addItem(cartItem);
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentScreen(
+            cartItems: cartProvider.items,
+            totalAmount: cartProvider.totalAmount.toDouble(),
+          ),
         ),
-      ),
-    );
+      );
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final favoriteProvider = Provider.of<FavoriteProvider>(context, listen: false);
+    await favoriteProvider.toggleFavorite(widget.coffee);
+    // Update status setelah toggle
+    final isFav = await favoriteProvider.isFavorite(widget.coffee.id);
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFav;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final favoriteProvider = Provider.of<FavoriteProvider>(context);
-    final isFav = favoriteProvider.isFavorite(widget.coffee);
     final currentPrice = getCurrentPrice();
 
     return Scaffold(
@@ -129,22 +138,20 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         CircleAvatar(
-                          backgroundColor: Colors.white.withValues(alpha: 0.7),
+                          backgroundColor: Colors.white.withOpacity(0.7),
                           child: IconButton(
                             icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
                         CircleAvatar(
-                          backgroundColor: Colors.white.withValues(alpha: 0.7),
+                          backgroundColor: Colors.white.withOpacity(0.7),
                           child: IconButton(
                             icon: Icon(
-                              isFav ? Icons.favorite : Icons.favorite_border,
-                              color: isFav ? Colors.red : Colors.black,
+                              _isFavorite ? Icons.favorite : Icons.favorite_border,
+                              color: _isFavorite ? Colors.red : Colors.black,
                             ),
-                            onPressed: () {
-                              favoriteProvider.toggleFavorite(widget.coffee);
-                            },
+                            onPressed: _toggleFavorite,
                           ),
                         ),
                       ],
@@ -212,7 +219,6 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 25),
-                  // Tampilkan Harga
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
